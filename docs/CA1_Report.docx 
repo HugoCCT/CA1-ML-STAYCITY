@@ -1,0 +1,83 @@
+Machine Learning Tools CA1 — Staycity Dublin: Predicting Daily Towel & Linen Demand by Floor
+
+Organisation Overview 
+
+Staycity is an aparthotel operator offering “apartment freedom with hotel comforts”, combining hotel standards with apartment-style living, including facilities such as kitchens, reception services, and guest amenities.  ￼ The group operates under brands including Staycity Aparthotels and Wilde Aparthotels.  ￼ In Dublin, Staycity has multiple centrally located properties, serving both leisure and business travellers and operating in a high-turnover city hospitality environment.  ￼
+
+From an operational perspective, consistent room readiness and housekeeping efficiency depend on effective internal logistics—especially laundry supply (towels and bed linens). Small daily allocation errors can scale into delays, repeated staff trips, and service quality issues. This assessment proposes a Machine Learning (ML) approach to improve the daily distribution of towels and linens across floors.
+
+⸻
+
+Problem Statement and Business Context 
+
+In current operations, towels and linens (sheets) are distributed across floors in an ad-hoc manner. The distribution is often not based on key demand drivers, leading to a common failure mode: a floor that does not need extra stock receives surplus, while a floor that has high turnover lacks towels/linens. When shortages occur, porters must make repeated trips to deliver urgent top-ups, increasing workload and causing delays in housekeeping workflows and room readiness.
+
+The primary driver for daily towel and linen demand is check-outs: check-outs typically trigger towel replacement and bed/linen change for the next guest. However, this knowledge is informal and tends to remain with managers, and it is not consistently converted into an actionable, floor-by-floor allocation plan for the team executing distribution. The goal is to move from “random allocation” to a consistent, data-driven method that helps staff allocate stock correctly each day.
+
+⸻
+
+Proposed ML System Overview 
+
+The proposed system predicts next-day towel and linen demand per floor using operational signals—especially planned check-outs. The recommended output is a simple, actionable classification label for each (date, floor, item type):
+	•	LOW demand
+	•	MEDIUM demand
+	•	HIGH demand
+
+This label can be mapped to “par levels” (recommended packs to allocate) such as: LOW = minimum stock, MEDIUM = standard stock, HIGH = extra stock. The focus is on towels and linens because other items such as duvets and pillowcases tend to follow more stable patterns, while towels and linens are the items most impacted by daily turnover.
+
+A key constraint is that the organisation currently lacks a structured dataset for “actual demand by floor”. Therefore, the solution is designed with a practical rollout: start with an immediate baseline rule using check-outs, then introduce lightweight logging to enable supervised learning.
+
+⸻
+
+2) ML Approaches in Context (Core Analysis)
+
+Supervised vs Unsupervised Learning 
+
+Supervised learning uses historical examples where the correct outcome is known. In this problem, once the property begins recording daily outcomes by floor (e.g., packs delivered and urgent top-ups), labels can be created such as “Floor 4 towels demand = HIGH”. A supervised model can then learn the mapping from operational inputs (check-outs, day-of-week, seasonality, recent urgent requests) to demand labels. This approach is well-aligned with the business objective because it produces a measurable and actionable prediction for each floor each day, and performance can be evaluated objectively using confusion matrices and class-specific metrics (e.g., F1-score for HIGH demand).
+
+Unsupervised learning does not require labelled outcomes; it discovers patterns or groups in the data (e.g., clusters of “high turnover days” vs “long-stay stable days”). In the Staycity context, clustering could help identify recurring operational profiles across floors and days, but it is less direct for day-to-day allocation because it does not automatically output “how many packs should be sent tomorrow”. Instead, it typically requires human interpretation and additional rules to translate clusters into concrete allocation quantities. Therefore, unsupervised learning is valuable as a secondary analytical tool, while supervised learning better fits the primary operational decision.
+
+⸻
+
+Classification vs Clustering 
+
+Classification is the recommended primary ML task. It predicts a discrete category (LOW/MEDIUM/HIGH) for towel demand and linen demand by floor and day. This output is immediately operational: staff can follow a simple allocation plan rather than relying on guesswork. Classification also supports cost-aware tuning: predicting LOW when the true demand is HIGH can cause shortages and delays, so the model can be tuned to prioritise catching HIGH demand even if it slightly increases over-allocation.
+
+Clustering is an unsupervised technique that groups floor-days into clusters based on similarity (e.g., “weekend high turnover”, “weekday stable demand”, “long-stay heavy”). While clustering may generate insights—such as identifying which floors behave similarly—it does not provide an explicit demand label for tomorrow’s allocation. To use clustering operationally, managers would need to interpret clusters and define extra rules (e.g., “Cluster A implies +X packs”), which adds complexity and reduces clarity for day-to-day execution. For that reason, clustering is best positioned as a supportive tool for planning and understanding patterns, not as the main engine for daily allocation decisions.
+
+⸻
+
+3) Selected Approach and Justification (≈140–180 words)
+
+The selected approach is supervised learning with classification to predict LOW/MEDIUM/HIGH demand for towels and linens by floor for the next day. This selection is justified by the need for a clear daily decision output and by the fact that labels can be created once simple logging is introduced. A classification approach balances practicality and interpretability: it produces a simple label that can be mapped to stock “par levels”, requires less precision than predicting an exact numeric quantity, and can be improved iteratively as data quality grows.
+
+Clustering remains a valuable secondary method for identifying operational patterns, but it is not sufficient as the primary solution because it does not directly produce an allocation instruction. Over time, once classification performance is stable, the system could evolve into predicting exact quantities (regression/forecasting). However, for immediate operational impact and for alignment with the assessment focus (supervised vs unsupervised; classification vs clustering), supervised classification is the most suitable starting point.
+
+⸻
+
+4) Evaluation, Deployment, and Risks 
+
+Evaluation metrics should reflect operational cost. A confusion matrix is essential to understand the error profile. The most harmful error is predicting LOW when the true demand is HIGH, which creates shortages, urgent calls, and repeated porter trips. Therefore, class-specific metrics—especially recall and F1-score for HIGH demand—should be highlighted, rather than relying only on overall accuracy.
+
+Deployment workflow should be phased:
+	1.	Baseline (no ML): allocate packs using a check-out driven rule (removes randomness immediately).
+	2.	Data capture: introduce a lightweight daily log per floor (check-outs, packs delivered for towels/linens, urgent top-ups).
+	3.	Supervised model: train a classifier after 4–8 weeks of logs, generate a next-day floor-by-floor plan.
+	4.	Monitoring: review weekly shortages and metric drift (seasonality, events, policy changes).
+
+From a privacy perspective, the system can use aggregated operational counts (by floor/day) rather than personal guest data. Staycity’s privacy statement indicates that personal data may be collected through reservations and digital channels, but this use case can be designed to minimise data exposure by relying on non-identifying operational data.  ￼
+
+⸻
+
+Conclusion 
+
+Daily towel and linen allocation by floor is a high-impact operational problem when handled ad-hoc. A supervised classification approach using check-outs as the primary driver can convert informal managerial knowledge into consistent, actionable decisions for the team executing distribution. By starting with a simple baseline, introducing lightweight logging, and evolving into a trained classifier evaluated with cost-aware metrics, Staycity can reduce shortages, rework, and delays—improving both staff workflow and guest-facing outcomes.
+
+⸻
+
+References (Harvard style — starter list)
+
+(Replace “Accessed” date with today’s date in Dublin.)
+	•	Staycity. (n.d.). Staycity Group. Available at: https://www.staycity.com/group (Accessed: 18 February 2026).  ￼
+	•	Staycity. (n.d.). Dublin Serviced Apartments. Available at: https://www.staycity.com/dublin (Accessed: 18 February 2026).  ￼
+	•	Staycity. (n.d.). Privacy Statement. Available at: https://www.staycity.com/privacy-statement (Accessed: 18 February 2026).  ￼
