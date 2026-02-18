@@ -1,49 +1,59 @@
-## 4.1 Supervised vs Unsupervised Learning (Staycity context)
+## 4.2 Classification vs Clustering (Staycity context)
 
-### Supervised learning — what it means here
-In this use case, supervised learning means training a model using historical examples where the “correct outcome” is known.
-Once the property starts recording daily outcomes by floor (packs delivered + urgent top-ups), we can create labels such as:
-- `LOW`, `MEDIUM`, `HIGH` towel demand
-- `LOW`, `MEDIUM`, `HIGH` linen demand
+### Classification — what it means here (recommended)
+Classification is a supervised learning task where the model predicts a category (label).
+For this operational problem, the categories are designed to match the daily allocation decision:
 
-A supervised model learns a mapping from operational inputs (especially check-outs) to these labels.  
-For example:
-- Inputs: tomorrow’s check-outs on Floor 4, day-of-week, recent urgent top-ups
-- Output: “Floor 4 towels demand = HIGH”
+- `LOW` demand
+- `MEDIUM` demand
+- `HIGH` demand
 
-**Why supervised fits the business goal**
-- The business needs a clear, actionable prediction for each floor each day.
-- There is a measurable outcome once we start logging (“how much was actually needed”).
-- We can evaluate performance objectively using a confusion matrix and F1-score (especially for HIGH demand).
+We run classification **per floor** and **per item type** (towels and linens).
 
-**Typical supervised tasks in this scenario**
-- Classification: predict LOW/MED/HIGH per floor and item type.
-- (Future improvement) Regression: predict the exact number of packs.
+Example:
+- Inputs: `checkouts_floor=18`, `day_of_week=Friday`, `recent_urgent_topups=3`
+- Output: `towels_demand_class = HIGH` (Floor 4)
+
+**Why classification is operationally strong**
+- The output is immediately actionable for porters and housekeeping.
+- It is easy to map classes to “par levels” (recommended stock levels):
+  - LOW → send minimum packs
+  - MEDIUM → send standard packs
+  - HIGH → send extra packs
+- It is easy to evaluate and improve:
+  - confusion matrix shows where mistakes happen
+  - F1-score for HIGH demand focuses on avoiding shortages
+
+**How classification reduces the current issue**
+Because allocation is currently “random”, classification introduces a consistent, data-driven rule:
+- floors with many check-outs are predicted as higher demand,
+- floors with low turnover are predicted as lower demand,
+which prevents shortages on floors that need stock and reduces waste elsewhere.
 
 ---
 
-### Unsupervised learning — what it means here
-Unsupervised learning does not require labelled outcomes. Instead, it finds structure or patterns in the data on its own.
-In this scenario, unsupervised learning could be used to group similar floors or similar days into “profiles” based on features like:
-- occupancy level
-- turnover patterns (check-outs)
-- day-of-week / seasonality
+### Clustering — what it means here (alternative / secondary)
+Clustering is an unsupervised task where the algorithm groups observations into clusters without labels.
+In this context, clustering could group:
+- floor-days with similar occupancy/turnover patterns, or
+- floors that behave similarly over time.
 
-Example outputs:
-- Cluster A: “high turnover floors on weekends”
-- Cluster B: “long-stay heavy floors with stable demand”
+Example clusters:
+- Cluster 1: “high turnover days” (many check-outs)
+- Cluster 2: “stable long-stay pattern” (few check-outs, stable demand)
+- Cluster 3: “mid turnover weekday pattern”
 
-**Why unsupervised is less direct for daily allocation**
-- It produces groups/profiles, not an explicit prediction of what to allocate tomorrow.
-- It usually requires human interpretation to convert clusters into concrete quantities.
-- It is more suited to insight and planning than daily operational decisions.
+**Why clustering is less suitable as the primary solution**
+- Clusters do not directly tell you “how many packs to allocate tomorrow”.
+- The result needs interpretation and additional rules to convert clusters into quantities.
+- Two clusters may still require different towel vs linen decisions.
 
-**Where unsupervised could still help (secondary use)**
-- Identifying recurring operational patterns and exceptions (e.g., unusual days).
-- Supporting managers with insight (e.g., “Floors 5–6 behave similarly, consider similar stock rules”).
-- Highlighting anomalies (e.g., a day that does not match usual patterns).
+**Where clustering can still add value**
+- Insight: understand typical operational patterns across floors/days.
+- Planning: identify which floors behave similarly and can share stocking policies.
+- Anomaly detection: flag days that do not match usual clusters (potential special events or unusual turnover).
 
 ---
 
 ### Summary (in one line)
-For the towel/linen allocation problem, supervised learning is the best primary approach because it produces a measurable, actionable prediction per floor per day, while unsupervised learning is better as a secondary tool for discovering patterns and supporting managerial insight.
+For daily towel/linen allocation decisions, classification is the best primary approach because it outputs a clear LOW/MED/HIGH demand label per floor, while clustering is better as a secondary tool for discovering patterns and supporting planning.
